@@ -10,11 +10,14 @@ use App\Http\Controllers\CashierController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\SupportController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+Route::get('/', fn() => redirect()->route('events.index'));
 
 
 Route::middleware('auth')->group(function () {
@@ -68,6 +71,13 @@ Route::get('/events/{event}', [EventController::class, 'show'])->name('events.sh
 // Admin
 Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('/events', EventController::class)->except(['show','index']);
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/me', [UserController::class,'dashboard'])->name('user.dashboard');
+
+    Route::post('/support/refund', [SupportController::class,'storeRefund'])->name('support.refund');
+    Route::post('/support/swap',   [SupportController::class,'storeSwap'])->name('support.swap');
 });
 
 
