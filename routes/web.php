@@ -9,11 +9,19 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\CashierController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/cart/add', [TicketController::class, 'addToCart'])->name('cart.add');
@@ -34,5 +42,17 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
     Route::get('/transactions', [AdminController::class, 'transactions'])->name('transactions');
     Route::get('/users', [AdminController::class, 'users'])->name('users');
 });
+
+// Publik
+Route::get('/events', [EventController::class, 'index'])->name('events.index');
+Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+
+// Admin
+Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('/events', EventController::class)->except(['show','index']);
+});
+
+
+
 
 require __DIR__.'/auth.php';

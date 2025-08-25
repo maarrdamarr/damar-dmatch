@@ -18,10 +18,12 @@ class AdminController extends Controller
         return view('admin.dashboard', compact('totalIncome','todayIncome','ordersCount','usersCount','recentOrders'));
     }
 
+    // AdminController.php
     public function transactions() {
-        $tx = Transaction::with('order')->latest()->paginate(20);
+        $tx = \App\Models\Transaction::with(['order.event'])->latest()->paginate(20);
         return view('admin.transactions', compact('tx'));
     }
+
 
     public function users() {
         $users = User::orderBy('id','desc')->paginate(20);

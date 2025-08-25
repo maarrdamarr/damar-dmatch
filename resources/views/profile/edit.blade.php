@@ -27,3 +27,19 @@
         </div>
     </div>
 </x-app-layout>
+@extends('layouts.app', ['title'=>'Profil','page'=>'Profil'])
+
+@section('content')
+<form method="POST" class="max-w-md space-y-4">
+  @csrf @method('PATCH')
+  <label class="form-control">
+    <span class="label-text">Nama</span>
+    <input name="name" class="input input-bordered" value="{{ old('name', $user->name) }}">
+  </label>
+  <button class="btn btn-primary">Simpan</button>
+</form>
+<form method="POST" class="mt-6">@csrf @method('DELETE')
+  <button class="btn btn-error btn-outline">Hapus Akun</button>
+</form>
+@endsection
+
