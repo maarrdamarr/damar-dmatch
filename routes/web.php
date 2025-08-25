@@ -34,6 +34,12 @@ Route::middleware(['auth','kasir'])->prefix('kasir')->name('kasir.')->group(func
     Route::get('/dashboard', [CashierController::class, 'dashboard'])->name('dashboard');
     Route::post('/offline-sale', [CashierController::class, 'offlineSale'])->name('offline.sale');
     Route::post('/confirm/{order}', [CashierController::class, 'confirmPayment'])->name('confirm');
+
+    Route::get('/riwayat', [\App\Http\Controllers\CashierController::class, 'history'])->name('history');
+    Route::get('/riwayat/export', [\App\Http\Controllers\CashierController::class, 'exportCsv'])->name('history.export');
+
+    // BARU: Menu Lain-lain (bantuan)
+    Route::get('/bantuan', fn () => view('kasir.help'))->name('help');
 });
 
 Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function () {
