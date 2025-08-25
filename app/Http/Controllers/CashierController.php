@@ -10,15 +10,22 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+
 
 class CashierController extends Controller
 {
-    public function dashboard()
-    {
-        $events = Event::orderBy('start_at', 'desc')->get();
+    public function dashboard() {
+        $events = Event::orderBy('start_at','desc')->get();
         $todayIncome = Transaction::whereDate('created_at', today())->sum('amount');
         $orders = Order::with('event')->orderByDesc('id')->limit(20)->get();
-        return view('kasir.dashboard', compact('events', 'todayIncome', 'orders'));
+
+        $pending = Order::with('event','user')
+            ->whereIn('status', ['waiting_approval','awaiting_cash'])
+            ->orderBy('id','desc')
+            ->paginate(10);
+
+        return view('kasir.dashboard', compact('events','todayIncome','orders','pending'));
     }
 
     public function offlineSale(Request $request)
@@ -80,9 +87,34 @@ class CashierController extends Controller
         });
     }
 
-    public function confirmPayment(Order $order)
-    {
-        $order->update(['status' => 'paid']);
-        return back();
+    public function confirmPayment(Order $order) {
+        if ($order->status === 'paid') {
+            return back()->with('success','Order sudah lunas.');
+        }
+
+        DB::transaction(function () use ($order) {
+            // Ubah semua kursi reserved -> sold
+            foreach ($order->items as $item) {
+                $esp = $item->eventSeatPricing()->lockForUpdate()->first();
+                if ($esp) $esp->update(['status'=>'sold']);
+            }
+
+            $order->update([
+                'status' => 'paid',
+                'verified_at' => now(),
+                'verified_by' => Auth::id(),
+            ]);
+
+            Transaction::create([
+                'order_id'=>$order->id,
+                'type'=>'in',
+                'amount'=>$order->total,
+                'method'=>$order->payment_method,
+                'recorded_by' => Auth::user()->email,
+                'paid_at'=>now(),
+            ]);
+        });
+
+        return back()->with('success','Pembayaran di-ACC & dicatat.');
     }
 }

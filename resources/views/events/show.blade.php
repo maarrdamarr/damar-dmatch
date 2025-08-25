@@ -1,82 +1,68 @@
-@extends('layouts.app', ['title' => 'Pilih Kursi', 'page' => $event->title])
+@extends('layouts.app', ['title'=>'Pilih Kursi','page'=>$event->title])
 
 @section('content')
-  {{-- Info Event --}}
-  <div class="card bg-base-100 shadow mb-4">
-    <div class="card-body">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-          <h2 class="text-xl font-semibold">{{ $event->title }}</h2>
-          <p class="opacity-70">
-            {{ $event->start_at->format('d M Y, H:i') }}
-            @if($event->end_at)– {{ $event->end_at->format('H:i') }}@endif
-            • {{ $event->venue }}
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="badge">{{ ucfirst($event->status) }}</span>
-          <span class="badge badge-outline">Kapasitas: {{ $event->capacity }}</span>
-        </div>
+@php
+  // radius dalam % dari sisi container (sesuaikan bila ingin lebih renggang)
+  $radiusForRing = [1=>44, 2=>30, 3=>16]; // 1=Reguler(outer), 2=VIP, 3=VVIP
+@endphp
+
+<form method="POST" action="{{ route('cart.add') }}" class="space-y-5">
+  @csrf
+  <input type="hidden" name="event_id" value="{{ $event->id }}">
+
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="badge badge-info">Reguler</span>
+    <span class="badge badge-warning">VIP</span>
+    <span class="badge badge-error">VVIP</span>
+    <span class="badge">Abu-abu = Terjual/Reserved</span>
+  </div>
+
+  <div class="mx-auto w-full max-w-3xl">
+    <div class="relative aspect-square rounded-box bg-base-100 shadow border">
+      <!-- lingkaran panduan -->
+      <div class="absolute inset-0 m-6 rounded-full border-2 border-base-300"></div>
+      <div class="absolute inset-[20%] rounded-full border border-base-300"></div>
+      <div class="absolute inset-[36%] rounded-full border border-base-300"></div>
+      <div class="absolute inset-[48%] rounded-full bg-base-200 flex items-center justify-center text-xs opacity-70">
+        Panggung
       </div>
+
+      @foreach($event->seatPricings as $sp)
+        @php
+          $seat   = $sp->stadiumSeat;
+          $ring   = (int)($seat->ring ?? 1);
+          $angle  = (int)($seat->angle_deg ?? 0);
+          $radius = $radiusForRing[$ring] ?? 40;
+
+          $sold   = $sp->status !== 'available';
+          $btn    = match($seat->seat_class){
+                      'vvip' => 'btn-error',
+                      'vip'  => 'btn-warning',
+                      default=> 'btn-info'
+                    };
+          $disabled = $sold ? 'opacity-40 pointer-events-none' : 'hover:scale-110';
+          $label = $seat->section.'-'.$seat->row_label.'-'.$seat->seat_number;
+        @endphp
+
+        <label
+          class="absolute top-1/2 left-1/2 transition-transform duration-150"
+          style="transform:
+                 rotate({{ $angle }}deg)
+                 translate({{ $radius }}%)
+                 rotate(-{{ $angle }}deg)
+                 translate(-50%, -50%);"
+          title="{{ strtoupper($seat->seat_class) }} • {{ $label }} • Rp {{ number_format($sp->price,0,',','.') }}"
+        >
+          <input type="checkbox" name="seat_ids[]" value="{{ $sp->id }}" class="sr-only" {{ $sold?'disabled':'' }}/>
+          <div class="btn btn-xs btn-circle {{ $btn }} {{ $disabled }}"></div>
+        </label>
+      @endforeach
     </div>
   </div>
 
-  {{-- Jika kursi belum ada --}}
-  @if($event->seatPricings->isEmpty())
-    <div class="alert alert-warning">
-      Kursi belum disetting untuk event ini. Silakan kembali lagi nanti atau hubungi admin.
-    </div>
-  @else
-    @php
-      $available = $event->seatPricings->where('status','available')->count();
-      $unavailable = $event->seatPricings->count() - $available;
-    @endphp
-
-    {{-- Legend & ringkasan --}}
-    <div class="flex flex-wrap items-center gap-3 mb-3">
-      <span class="badge badge-success">Tersedia: {{ $available }}</span>
-      <span class="badge badge-neutral">Terjual/Reserved: {{ $unavailable }}</span>
-    </div>
-
-    {{-- Form pilih kursi --}}
-    <form method="POST" action="{{ route('cart.add') }}" class="space-y-4">
-      @csrf
-      <input type="hidden" name="event_id" value="{{ $event->id }}">
-
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        @foreach($event->seatPricings as $sp)
-          @php
-            $s = $sp->stadiumSeat;
-            $sold = $sp->status !== 'available';
-          @endphp
-          <label class="relative group">
-            <input
-              type="checkbox"
-              name="seat_ids[]"
-              value="{{ $sp->id }}"
-              class="checkbox checkbox-sm absolute top-2 left-2"
-              {{ $sold ? 'disabled' : '' }}
-            >
-            <div class="p-3 rounded-box border text-center transition
-                        {{ $sold
-                          ? 'bg-base-300 text-base-content/60 border-base-300 cursor-not-allowed'
-                          : 'bg-base-100 hover:bg-primary/10 hover:border-primary/40 cursor-pointer' }}">
-              <div class="font-semibold">
-                {{ $s->section }}-{{ $s->row_label }}-{{ $s->seat_number }}
-              </div>
-              <div class="text-sm">Rp {{ number_format($sp->price, 0, ',', '.') }}</div>
-              @if($sold)
-                <div class="mt-1 text-xs opacity-70">({{ $sp->status }})</div>
-              @endif
-            </div>
-          </label>
-        @endforeach
-      </div>
-
-      <div class="flex items-center justify-between">
-        <a href="{{ route('events.index') }}" class="btn btn-ghost">Kembali</a>
-        <button class="btn btn-primary">Tambah ke Keranjang</button>
-      </div>
-    </form>
-  @endif
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary">Tambah ke Keranjang</button>
+    <a href="{{ route('events.index') }}" class="btn">Kembali</a>
+  </div>
+</form>
 @endsection

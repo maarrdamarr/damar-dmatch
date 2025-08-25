@@ -40,25 +40,36 @@ class StarterSeeder extends Seeder
             'status'=>'published',
         ]);
 
-        // Bangun kursi (Section A, 10 row x 15 seat)
+        $layout = [
+            ['class'=>'regular','ring'=>1,'count'=>64,'price'=>75000],
+            ['class'=>'vip',    'ring'=>2,'count'=>40,'price'=>150000],
+            ['class'=>'vvip',   'ring'=>3,'count'=>24,'price'=>300000],
+        ];
+
         $total = 0;
-        foreach (range(1,10) as $row) {
-            foreach (range(1,15) as $seat) {
-                $ss = StadiumSeat::firstOrCreate([
-                    'section'=>'A',
-                    'row_label'=> (string)$row,
-                    'seat_number'=> (string)$seat,
-                ]);
-                EventSeatPricing::firstOrCreate([
-                    'event_id'=>$event->id,
-                    'stadium_seat_id'=>$ss->id,
-                ],[
-                    'price'=> 75000 + ($row*1000),
-                    'status'=>'available'
-                ]);
+        foreach ($layout as $tier) {
+            for ($i=0; $i < $tier['count']; $i++) {
+                $angle = (int) round(360 * ($i / $tier['count']));
+                $ss = StadiumSeat::firstOrCreate(
+                    [
+                        'section'     => strtoupper($tier['class'][0]), // R / V / V (tetap unik dengan row+seat)
+                        'row_label'   => (string)$tier['ring'],         // pakai ring sbg row
+                        'seat_number' => (string)($i+1),
+                    ],
+                    [
+                        'seat_class' => $tier['class'],
+                        'ring'       => $tier['ring'],
+                        'angle_deg'  => $angle,
+                    ]
+                );
+
+                EventSeatPricing::firstOrCreate(
+                    ['event_id'=>$event->id,'stadium_seat_id'=>$ss->id],
+                    ['price'=>$tier['price'],'status'=>'available']
+                );
                 $total++;
             }
         }
         $event->update(['capacity'=>$total]);
-    }
+        }
 }
