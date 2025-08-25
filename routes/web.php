@@ -28,12 +28,24 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [TicketController::class, 'checkout'])->name('checkout');
     Route::post('/checkout', [TicketController::class, 'placeOrder'])->name('checkout.place');
     Route::get('/checkout/success/{reference}', [TicketController::class, 'success'])->name('checkout.success');
+    Route::get('/tickets/print/{reference}', [TicketController::class, 'print'])
+        ->name('tickets.print');
 });
 
 Route::middleware(['auth','kasir'])->prefix('kasir')->name('kasir.')->group(function () {
     Route::get('/dashboard', [CashierController::class, 'dashboard'])->name('dashboard');
     Route::post('/offline-sale', [CashierController::class, 'offlineSale'])->name('offline.sale');
     Route::post('/confirm/{order}', [CashierController::class, 'confirmPayment'])->name('confirm');
+
+    Route::get('/refund', [CashierController::class, 'refundForm'])->name('refund.form');
+    Route::post('/refund', [CashierController::class, 'processRefund'])->name('refund.process');
+    Route::post('/swap-seat', [CashierController::class, 'swapSeat'])->name('swap.seat');
+
+    Route::get('/riwayat', [CashierController::class, 'history'])->name('history');
+    Route::get('/riwayat/export', [CashierController::class, 'exportCsv'])->name('history.export');
+
+    Route::get('/cetak', [CashierController::class, 'printForm'])->name('print.form');
+
 
     Route::get('/riwayat', [\App\Http\Controllers\CashierController::class, 'history'])->name('history');
     Route::get('/riwayat/export', [\App\Http\Controllers\CashierController::class, 'exportCsv'])->name('history.export');

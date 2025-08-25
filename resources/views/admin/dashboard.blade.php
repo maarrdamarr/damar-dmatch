@@ -6,6 +6,8 @@
   <div class="stat"><div class="stat-title">Hari Ini</div><div class="stat-value">Rp {{ number_format($todayIncome,0,',','.') }}</div></div>
   <div class="stat"><div class="stat-title">Orders</div><div class="stat-value">{{ $ordersCount }}</div></div>
   <div class="stat"><div class="stat-title">Users</div><div class="stat-value">{{ $usersCount }}</div></div>
+  <div class="stat"><div class="stat-title">Cetak Online</div><div class="stat-value">{{ $printsOnline ?? 0 }}</div></div>
+  <div class="stat"><div class="stat-title">Cetak Kasir</div><div class="stat-value">{{ $printsCashier ?? 0 }}</div></div>
 </div>
 
 <div class="card bg-base-100 shadow mt-6">

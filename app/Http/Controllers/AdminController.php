@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\TicketPrint;
 
 class AdminController extends Controller
 {
@@ -15,7 +16,13 @@ class AdminController extends Controller
         $ordersCount = Order::count();
         $usersCount  = User::count();
         $recentOrders = Order::with('event')->latest()->limit(10)->get();
-        return view('admin.dashboard', compact('totalIncome','todayIncome','ordersCount','usersCount','recentOrders'));
+        $printsOnline  = TicketPrint::where('source','online')->count();
+        $printsCashier = TicketPrint::where('source','cashier')->count();
+
+        return view('admin.dashboard', compact(
+        'totalIncome','todayIncome','ordersCount','usersCount','recentOrders',
+        'printsOnline','printsCashier'
+        ));
     }
 
     // AdminController.php

@@ -62,9 +62,12 @@
           @if(in_array(auth()->user()->role, ['kasir','admin']))
             <li class="menu-title">Kasir</li>
             <li><a class="{{ request()->routeIs('kasir.dashboard')?'active':'' }}" href="{{ route('kasir.dashboard') }}">🧾 Kasir</a></li>
-            <li><a class="{{ request()->routeIs('kasir.history')?'active':'' }}" href="{{ route('kasir.history') }}">📜 Riwayat</a></li>
-            <li><a class="{{ request()->routeIs('kasir.help')?'active':'' }}" href="{{ route('kasir.help') }}">🧠 Lain-lain (Bantuan)</a></li>
-          @endif
+            <li><a class="{{ request()->routeIs('kasir.refund.*')?'active':'' }}" href="{{ route('kasir.refund.form') }}">↩️ Refund / Pindah Kursi</a></li>
+            <li><a class="{{ request()->routeIs('kasir.history')?'active':'' }}" href="{{ route('kasir.history') }}">📜 Riwayat Transaksi</a></li>
+            <li><a class="{{ request()->routeIs('kasir.print.form')?'active':'' }}" href="{{ route('kasir.print.form') }}">🖨️ Cetak Tiket (Offline)</a></li>
+            <li><a class="{{ request()->routeIs('kasir.help')?'active':'' }}" href="{{ route('kasir.help') }}">🧠 Bantuan</a></li>
+
+                      @endif
         @endauth
       </ul>
     </aside>

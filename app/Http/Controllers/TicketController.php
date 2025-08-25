@@ -10,6 +10,7 @@ use App\Models\EventSeatPricing;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Auth;
+use App\Models\TicketPrint;
 
 
 class TicketController extends Controller
@@ -152,5 +153,25 @@ class TicketController extends Controller
     {
         $order = Order::where('reference', $reference)->firstOrFail();
         return view('checkout.success', compact('order'));
+    }
+
+    public function print(Request $request, string $reference)
+    {
+        $order = Order::with(['event','items.eventSeatPricing.stadiumSeat','user'])
+            ->where('reference',$reference)->firstOrFail();
+
+        // hanya boleh cetak kalau sudah paid atau awaiting_cash (kasir mau bantu cetak)
+        if (!in_array($order->status, ['paid','awaiting_cash'])) {
+            abort(403, 'Order belum bisa dicetak.');
+        }
+
+        // log cetak
+        TicketPrint::create([
+            'order_id'   => $order->id,
+            'source'     => $request->query('source','online'), // online|cashier
+            'printed_by' => Auth::id(),
+        ]);
+
+        return view('tickets.print', compact('order'));
     }
 }
